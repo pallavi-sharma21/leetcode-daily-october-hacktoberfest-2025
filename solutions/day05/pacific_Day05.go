@@ -1,58 +1,59 @@
-func pacificAtlantic(islandGrid [][]int) [][]int {
-	if len(islandGrid) == 0 || len(islandGrid[0]) == 0 {
+func pacificAtlantic(heights [][]int) [][]int {
+    // Handle the edge case of an empty grid.
+	if len(heights) == 0 || len(heights[0]) == 0 {
 		return [][]int{}
 	}
 
-	numberOfRows := len(islandGrid)
-	numberOfColumns := len(islandGrid[0])
-
-	canFlowToPacific := make([][]bool, numberOfRows)
-	canFlowToAtlantic := make([][]bool, numberOfRows)
-
-	for i := 0; i < numberOfRows; i++ {
-		canFlowToPacific[i] = make([]bool, numberOfColumns)
-		canFlowToAtlantic[i] = make([]bool, numberOfColumns)
-	}
-	for column := 0; column < numberOfColumns; column++ {
-		exploreInland(0, column, canFlowToPacific, islandGrid)
-		exploreInland(numberOfRows-1, column, canFlowToAtlantic, islandGrid)
+	rows, cols := len(heights), len(heights[0])
+	
+    // These grids track which cells can be reached from each ocean.
+	pacific := make([][]bool, rows)
+	atlantic := make([][]bool, rows)
+	for i := range pacific {
+		pacific[i] = make([]bool, cols)
+		atlantic[i] = make([]bool, cols)
 	}
 
-	for row := 0; row < numberOfRows; row++ {
-		exploreInland(row, 0, canFlowToPacific, islandGrid)
-		exploreInland(row, numberOfColumns-1, canFlowToAtlantic, islandGrid)
+	// Start the DFS from all coastal cells.
+	for r := 0; r < rows; r++ {
+		dfs(r, 0, pacific, heights)          // Left coast (Pacific)
+		dfs(r, cols-1, atlantic, heights)    // Right coast (Atlantic)
+	}
+	for c := 0; c < cols; c++ {
+		dfs(0, c, pacific, heights)          // Top coast (Pacific)
+		dfs(rows-1, c, atlantic, heights)    // Bottom coast (Atlantic)
 	}
 
-	var sharedCells [][]int
-	for row := 0; row < numberOfRows; row++ {
-		for column := 0; column < numberOfColumns; column++ {
-			if canFlowToPacific[row][column] && canFlowToAtlantic[row][column] {
-				sharedCells = append(sharedCells, []int{row, column})
+	// Find all cells that are true in both grids.
+	var result [][]int
+	for r := 0; r < rows; r++ {
+		for c := 0; c < cols; c++ {
+			if pacific[r][c] && atlantic[r][c] {
+				result = append(result, []int{r, c})
 			}
 		}
 	}
-	return sharedCells
+
+	return result
 }
 
-func exploreInland(row, column int, isReachable [][]bool, islandGrid [][]int) {
-	isReachable[row][column] = true
+// dfs explores inland from a given cell as long as the terrain doesn't drop.
+func dfs(r, c int, visited [][]bool, heights [][]int) {
+	rows, cols := len(heights), len(heights[0])
 
-	numberOfRows := len(islandGrid)
-	numberOfColumns := len(islandGrid[0])
-	possibleDirections := [][]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
+	// Mark the current cell as visited.
+	visited[r][c] = true
 
-	for _, direction := range possibleDirections {
-		nextRow := row + direction[0]
-		nextColumn := column + direction[1]
+	// Define the four directions: up, down, left, right.
+	directions := [][]int{{-1, 0}, {1, 0}, {0, -1}, {0, 1}}
 
-		if nextRow < 0 || nextRow >= numberOfRows || nextColumn < 0 || nextColumn >= numberOfColumns {
-			continue
-		}
-		if isReachable[nextRow][nextColumn] {
-			continue
-		}
-		if islandGrid[nextRow][nextColumn] >= islandGrid[row][column] {
-			exploreInland(nextRow, nextColumn, isReachable, islandGrid)
+	for _, dir := range directions {
+		newR, newC := r+dir[0], c+dir[1]
+
+		// Check if the new cell is valid, not visited, and has a sufficient height.
+		if newR >= 0 && newR < rows && newC >= 0 && newC < cols &&
+			!visited[newR][newC] && heights[newR][newC] >= heights[r][c] {
+			dfs(newR, newC, visited, heights)
 		}
 	}
 }
