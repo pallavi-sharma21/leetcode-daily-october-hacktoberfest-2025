@@ -1,37 +1,27 @@
-// Day 18: Maximum number of distinct elements after performing +/- k operations
 import java.util.*;
 
 public class MaxDistinctElements {
-
+  
     public int maxDistinct(int[] numbers, int k) {
-        Arrays.sort(numbers); 
-        Set<Integer> uniqueNumbers = new HashSet<>(); 
+        if (numbers.length == 0) return 0;
 
-        for (int number : numbers) {
-            if (!uniqueNumbers.contains(number)) {
-                uniqueNumbers.add(number);  // Already unique, add it
-            } else {
-                boolean adjusted = false;
-                for (int diff = 1; diff <= k; diff++) {
-                    int lower = number - diff;
-                    int higher = number + diff;
-                    
-                    if (!uniqueNumbers.contains(lower)) {
-                        uniqueNumbers.add(lower);
-                        adjusted = true;
-                        break;
-                    } else if (!uniqueNumbers.contains(higher)) {
-                        uniqueNumbers.add(higher);
-                        adjusted = true;
-                        break;
-                    }
-                }
-                if (!adjusted) continue;  // Cannot adjust, skip
+        Arrays.sort(numbers); 
+        int count = 0;
+        int prev = Integer.MIN_VALUE >> 1; 
+
+        for (int i = 0; i < numbers.length; i++) {
+            int a = numbers[i];
+            int low = a - k;
+            int high = a + k;
+            int x = prev + 1;
+
+            if (x < low) x = low;     
+            if (x <= high) {        
+                count++;
+                prev = x;            
             }
         }
 
-        return uniqueNumbers.size(); 
+        return count;  
     }
 }
-
-   
